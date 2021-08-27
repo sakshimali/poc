@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="6db300f1-0008-426e-a4be-277819225f52" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="f89ef81e-d9f6-4668-a78c-70d1e7eb25f1" >
+		<db:my-sql-connection host="127.0.0.1" port="3306" user="root" password="root" database="poc" />
+	</db:config>
+	<flow name="getcustomer" doc:id="88671144-6e56-47b7-a68b-c50f9d03093b" >
+		<http:listener doc:name="Listener" doc:id="11a196ba-ccf5-4e1b-84c7-97d921d36258" config-ref="HTTP_Listener_config" path="/customer"/>
+		<db:select doc:name="Select" doc:id="e0ae56ce-a090-4c01-b31e-2db3febd6043" config-ref="Database_Config">
+			<db:sql ><![CDATA[select *from customer;
+]]></db:sql>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="552da9b5-0790-4144-9a48-afe9a687599f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="getcustomerbyid" doc:id="ad56bf65-ad7b-4506-8c78-a1fdf578c934">
+		<http:listener doc:name="Listener" doc:id="648f109e-40bd-4c85-8beb-b0cb9fc5ab86" config-ref="HTTP_Listener_config" path="/getbyid" allowedMethods="GET"/>
+		<db:select doc:name="Copy_of_Select" doc:id="c49ff40a-1afb-4301-8b08-ad4d3246dcc3" config-ref="Database_Config">
+			<db:sql><![CDATA[select *from customer
+WHERE ID = 1;]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{ 'ID'  : attributes.uriParams.ID}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Copy_of_Transform Message" doc:id="9cdb0a82-cc42-4c12-a007-93484d7f7bad">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="postcustomer" doc:id="3463e3ac-b8d7-4570-8054-60bfeabf142b" >
+		<http:listener doc:name="Listener" doc:id="f5abf13b-041d-4ddb-aace-9080cbea1413" config-ref="HTTP_Listener_config" path="/postcustomer" allowedMethods="POST"/>
+		<set-payload value='{ "message": "customner added"}' doc:name="Set Payload" doc:id="2b285c6a-98d2-4d03-a48c-a5cbd9d0212c" />
+	</flow>
+</mule>
